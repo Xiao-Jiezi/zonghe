@@ -7,8 +7,18 @@ import base64
 import io
 import PyPDF2
 import docx
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
 
 app = FastAPI(title="Agent Hub Backend")
+
+# 从环境变量读取 API Key
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
+if not DASHSCOPE_API_KEY:
+    print("警告: 未设置 DASHSCOPE_API_KEY 环境变量，请在 .env 文件中配置")
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,7 +34,7 @@ class AgentRequest(BaseModel):
 async def call_llm_gateway(prompt: str, system_prompt: str = "", image_base64: str = None) -> str:
     """统一向 通义千问 发起请求"""
     api_url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-    api_key = "sk-99af2b42d32a48a6a3ccaa1718f8279b" 
+    api_key = DASHSCOPE_API_KEY
     
     model_name = "qwen-vl-plus" if image_base64 else "qwen-plus"
 
@@ -73,7 +83,7 @@ async def call_llm_gateway(prompt: str, system_prompt: str = "", image_base64: s
 async def transcribe_audio(audio_bytes: bytes, filename: str, content_type: str) -> str:
     """调用通义千问 Qwen3-ASR-Flash 识别真实语音（OpenAI 兼容模式）"""
     api_url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-    api_key = "sk-99af2b42d32a48a6a3ccaa1718f8279b" 
+    api_key = DASHSCOPE_API_KEY
     
     headers = {
         "Authorization": f"Bearer {api_key}",

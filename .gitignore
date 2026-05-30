@@ -1,6 +1,7 @@
 # 依赖包
 node_modules/
 .env
+.env.local
 venv/
 __pycache__/
 *.pyc
@@ -22,3 +23,6 @@ Thumbs.db
 
 # ngrok
 ngrok.exe
+
+# 后端
+agent-hub-backend/.env

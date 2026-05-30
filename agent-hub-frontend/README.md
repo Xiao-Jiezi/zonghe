@@ -29,7 +29,11 @@
 ### AI 服务
 - **大模型**: 通义千问（Qwen Plus）API
 - **视觉多模态**: 通义千问（Qwen VL Plus）API
-- **语音识别**: 通义千问（SenseVoice）API
+- **语音识别**: 通义千问（Qwen3-ASR-Flash）API
+
+### 后端依赖
+- **PDF 处理**: PyPDF2
+- **Word 处理**: python-docx
 
 ## 🚀 快速开始
 
@@ -40,25 +44,39 @@
 
 ### 安装与运行
 
-**1. 安装后端依赖**
+**1. 克隆项目**
 ```bash
-cd agent-hub-backend
-pip install fastapi uvicorn httpx pydantic PyPDF2 python-docx
+git clone https://github.com/Xiao-Jiezi/zonghe.git
+cd zonghe
 ```
 
-**2. 安装前端依赖**
+**2. 配置后端 API Key**
 ```bash
-cd agent-hub-frontend
+cd agent-hub-backend
+# 复制模板文件
+cp .env.example .env
+# 编辑 .env 文件，填入你的通义千问 API Key
+# DASHSCOPE_API_KEY=sk-你的API密钥
+```
+
+**3. 安装后端依赖**
+```bash
+pip install -r requirements.txt
+```
+
+**4. 安装前端依赖**
+```bash
+cd ../agent-hub-frontend
 npm install
 ```
 
-**3. 启动后端服务**
+**5. 启动后端服务**
 ```bash
-cd agent-hub-backend
-uvicorn main:app --reload --port 8000
+cd ../agent-hub-backend
+py -m uvicorn main:app --reload --port 8000
 ```
 
-**4. 启动前端服务**
+**6. 启动前端服务**（新终端）
 ```bash
 cd agent-hub-frontend
 npm run dev
@@ -136,9 +154,26 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### 4. 语音语义分析
 - **真实麦克风录制**：使用浏览器 MediaRecorder API 捕获实时音频流
-- **语音转写识别**：使用通义千问 SenseVoice 进行真实语音转写
+- **语音转写识别**：使用通义千问 Qwen3-ASR-Flash 进行真实语音转写
 - **音频文件上传**：支持本地上传音频文件分析
 - **深层语义分析**：包含语音转写原文、核心主旨、细节梳理、意图分析
+
+## ⚠️ 注意事项
+
+### API Key 配置
+本项目使用通义千问系列 API，需要配置 API Key 才能正常使用：
+
+1. 前往 [阿里云百炼平台](https://bailian.console.aliyun.com/) 注册并获取 API Key
+2. 复制 `agent-hub-backend/.env.example` 为 `.env`
+3. 在 `.env` 中填入你的 API Key：
+   ```
+   DASHSCOPE_API_KEY=sk-你的API密钥
+   ```
+
+### 安全提示
+- **切勿将 `.env` 文件提交到版本控制系统**
+- 项目中已配置 `.gitignore` 忽略敏感文件
+- API Key 通过环境变量读取，不会硬编码在代码中
 
 ## 📝 开发命令
 
