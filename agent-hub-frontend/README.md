@@ -124,12 +124,19 @@ VITE_API_BASE_URL=http://localhost:8000
 
 | 接口 | 方法 | 功能 |
 |------|------|------|
+| `/api/chat` | POST | 综合智能聊天对话 |
 | `/api/coder` | POST | 自动编程代码生成 |
 | `/api/research` | POST | 深度研究报告生成 |
-| `/api/ocr` | POST (multipart/form-data) | 文档图像上传与自然语言重组 |
-| `/api/speech` | POST (multipart/form-data) | 真实音频流上传与语义分析 |
+| `/api/ocr` | POST (multipart/form-data) | 文档/图片上传分析（支持附加 prompt） |
+| `/api/speech` | POST (multipart/form-data) | 音频文件/录音上传分析（支持附加 prompt） |
 
 ## 🎯 功能模块
+
+### 🌟 综合问答终端 (Unified Chat)
+- **多模态交互**：在一个界面内无缝切换聊天、研究、编程、视觉、语音模式
+- **智能路由**：自动根据选择的模式分发至对应的 AI 引擎
+- **附件支持**：支持在对话中直接上传图片、文档、音频文件或实时录音
+- **附加指令**：上传文件/语音时可附带具体问题或分析要求，AI 优先解答
 
 ### 1. 自动编程控制台
 - 自然语言描述开发需求
@@ -149,12 +156,10 @@ VITE_API_BASE_URL=http://localhost:8000
 - **PDF 文本提取**：使用 PyPDF2 从真实 PDF 中提取文本内容
 - **Word 文档解析**：使用 python-docx 从 Word 文档提取文字
 - **多模态视觉分析**：使用通义千问 Qwen VL Plus 分析图片内容
-- **图像预览**：实时预览上传的文件
 - **AI 深度重组**：将提取的内容重新组织为优雅的自然语言
 
 ### 4. 语音语义分析
 - **真实麦克风录制**：使用浏览器 MediaRecorder API 捕获实时音频流
-- **语音转写识别**：使用通义千问 Qwen3-ASR-Flash 进行真实语音转写
 - **音频文件上传**：支持本地上传音频文件分析
 - **深层语义分析**：包含语音转写原文、核心主旨、细节梳理、意图分析
 

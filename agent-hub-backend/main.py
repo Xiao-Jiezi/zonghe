@@ -1,6 +1,6 @@
 import os
 import httpx
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import base64
@@ -34,7 +34,7 @@ class AgentRequest(BaseModel):
 async def call_llm_gateway(prompt: str, system_prompt: str = "", image_base64: str = None) -> str:
     """统一向 通义千问 发起请求"""
     api_url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-    api_key = DASHSCOPE_API_KEY
+    api_key = "sk-99af2b42d32a48a6a3ccaa1718f8279b" 
     
     model_name = "qwen-vl-plus" if image_base64 else "qwen-plus"
 
@@ -128,6 +128,13 @@ async def transcribe_audio(audio_bytes: bytes, filename: str, content_type: str)
 
 # ================= 业务接口路由 =================
 
+@app.post("/api/chat")
+async def api_chat(req: AgentRequest):
+    """新增：标准综合聊天接口"""
+    sys_prompt = "你是一个智能、友善、全能的AI助手。请自然、准确地回答用户的问题，并提供有帮助的信息。"
+    result = await call_llm_gateway(req.prompt, sys_prompt)
+    return {"status": "success", "data": result}
+
 @app.post("/api/coder")
 async def api_auto_coder(req: AgentRequest):
     sys_prompt = "你是一个顶尖的全栈软件架构师。请根据用户需求输出高质量代码。务必在回答最后使用 Markdown 代码块包裹代码，并准确标注编程语言（如 ```javascript, ```python 等）。"
@@ -141,8 +148,8 @@ async def api_deep_research(req: AgentRequest):
     return {"status": "success", "data": result}
 
 @app.post("/api/ocr")
-async def api_ocr(file: UploadFile = File(...)):
-    """真实接收前端传来的图片/文档并解析"""
+async def api_ocr(file: UploadFile = File(...), prompt: str = Form(None)):
+    """真实接收前端传来的图片/文档并解析（支持附加文字要求）"""
     content = await file.read()
     filename = file.filename.lower()
     extracted_text = ""
@@ -182,13 +189,16 @@ async def api_ocr(file: UploadFile = File(...)):
     except Exception as e:
         return {"status": "error", "data": f"文件解析失败: {str(e)}"}
     
+    # 如果用户输入了附加的问题，将其拼接到提问中
+    if prompt:
+        extracted_text += f"\n\n--- 用户的具体问题/要求 ---\n{prompt}"
+        
     sys_prompt = """你是一个高级多模态文档分析专家。
 请对提取出的文档文本或图片内容进行自然语言总结和重组。
 要求：
 1. 绝对不要输出 JSON 格式。
 2. 用流畅的自然语言、清晰的段落结构来汇报。
-3. 一两句话总结核心大意，然后归纳关键信息。
-4. 用逻辑清晰的方式将凌乱的信息重新组织排版。"""
+3. 如果用户有具体的附加问题，请优先解答用户的问题。"""
     
     try:
         result = await call_llm_gateway(extracted_text, sys_prompt, image_base64)
@@ -197,11 +207,10 @@ async def api_ocr(file: UploadFile = File(...)):
         return {"status": "error", "data": f"提取失败: {str(e)}"}
 
 @app.post("/api/speech")
-async def api_speech_analysis(file: UploadFile = File(...)):
-    """真实处理录音文件"""
+async def api_speech_analysis(file: UploadFile = File(...), prompt: str = Form(None)):
+    """真实处理录音文件（支持附加文字要求）"""
     content = await file.read()
     
-    # 【修复核心点】：处理缺少后缀名、或 Mime Type 丢失导致 API 报错的问题
     filename = file.filename or "audio_record.webm"
     content_type = file.content_type or "audio/webm"
     
@@ -219,8 +228,7 @@ async def api_speech_analysis(file: UploadFile = File(...)):
         if not transcript:
             return {"status": "error", "data": "未能识别出语音内容，音频可能为空或全为噪音。"}
     except HTTPException as he:
-        # 精准抛出 API 错误原文
-        return {"status": "error", "data": f"通义千问语音接口报错: {he.detail}"}
+        return {"status": "error", "data": f"阿里云语音接口报错: {he.detail}"}
     except Exception as e:
         return {"status": "error", "data": f"音频发送异常: {str(e)}"}
         
@@ -229,12 +237,12 @@ async def api_speech_analysis(file: UploadFile = File(...)):
 请对用户的语音转写文本进行深度理解。
 请输出排版优雅的自然语言，包含：
 1. 语音转写原文（引用格式）。
-2. 核心主旨概括。
-3. 梳理重要细节与逻辑。
-4. 分析说话者的深层语义与意图。
-绝对不要输出 JSON 格式！"""
+2. 如果用户有附加提问，请优先解答提问。
+3. 分析说话者的深层语义与意图。"""
     
-    prompt_text = f"以下是真实语音转写结果，请分析：\n\n{transcript}"
+    prompt_text = f"以下是真实语音转写结果：\n\n{transcript}"
+    if prompt:
+        prompt_text += f"\n\n--- 用户的附加问题/要求 ---\n{prompt}"
     
     try:
         result = await call_llm_gateway(prompt_text, sys_prompt)
